@@ -32,18 +32,37 @@ s.on("connection", function(ws) {
         function(err) {
           if (err) console.log(err);
           var request = new sql.Request();
-          var token = md5(msg_json.user+msg_json.pass);
+          var token = md5(msg_json.user + msg_json.pass);
           request.query(
-              "select TEN_NHAN_VIEN, e_mail,'" + token +"' token,0 Cty, Isnull(IsCaoNhat,0) IsCaoNhat, DIEN_THOAI_1 FROM VINA_IAS.dbo.DM_Nhan_Vien_TT where MNVTT='" +
+            "select TEN_NHAN_VIEN, e_mail,'" +
+              token +
+              "' token,0 Cty, Isnull(IsCaoNhat,0) IsCaoNhat, DIEN_THOAI_1 FROM VINA_IAS.dbo.DM_Nhan_Vien_TT where MNVTT='" +
               msg_json.user +
               "' and pwd='" +
               msg_json.pass +
               "';",
             function(err, recordset) {
               if (err) console.log(err);
-                console.log(JSON.stringify(recordset.recordset));
-                ws.send(JSON.stringify(recordset.recordset));
-                sql.close();
+              console.log(JSON.stringify(recordset.recordset));
+              ws.send(JSON.stringify(recordset.recordset));
+              sql.close();
+            }
+          );
+        }
+      );
+    } else if (msg_json.action == "SANLUONG_ACTION") {
+      sql.connect(
+        config,
+        function(err) {
+          if (err) console.log(err);
+          var request = new sql.Request();
+
+          request.query(
+            'exec VINA_Chung.dbo.GetSanLuongHienTai "namph", 1;',
+            function(err, recordset) {
+              if (err) console.log(err);
+              ws.send(JSON.stringify(recordset.recordset));
+              sql.close();
             }
           );
         }
