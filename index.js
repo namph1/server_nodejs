@@ -61,6 +61,22 @@ app.get("/khoan", function (req, res) {
     } );
 });
 
+app.get("/dondathang", function (req, res) {
+  sql.connect( configHD, function(err) {
+      if (err) console.log(err);
+      var request = new sql.Request();
+
+      request.query(
+        'exec VINA_IAS.dbo.Tien_BaoCaoDSDatHang "namph",1,1;',
+        function(err, recordset) {
+          if (err) console.log(err);
+          res.send(JSON.stringify(recordset.recordset));
+          sql.close();
+        }
+      );
+    } );
+});
+
 console.log("Start server at " + new Date().toLocaleString());
 
 s.on("connection", function(ws, req) {
