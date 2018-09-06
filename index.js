@@ -24,6 +24,13 @@ var configHD = {
   database: "VINA_IAS"
 };
 
+var config_test = {
+  user: "sa",
+  password: "vinavina",
+  server: "10.0.0.100",
+  database: "SMSNganHang"
+};
+
 serverHttp.listen(process.env.PORT || 5000);
 
 //get san luong chung
@@ -204,23 +211,40 @@ s.on("connection", function(ws, req) {
           );
         }
       );
-      // } else if (msg_json.action == "SANLUONG_ACTION") {
-      //   sql.connect(
-      //     config,
-      //     function(err) {
-      //       if (err) console.log(err);
-      //       var request = new sql.Request();
-
-      //       request.query(
-      //         'exec VINA_Chung.dbo.GetSanLuongHienTai "namph", 1;',
-      //         function(err, recordset) {
-      //           if (err) console.log(err);
-      //           ws.send(JSON.stringify(recordset.recordset));
-      //           sql.close();
-      //         }
-      //       );
-      //     }
-      //   );
+    } else if (msg_json.action == "DONHANG_ACTION") {
+      var makh = msg_json.makh;
+      sql.close();
+      sql.connect(
+        config_test,
+        function(err) {
+          if (err) console.log(err);
+          var request = new sql.Request();
+          var count = 0;
+          var length = Object.keys(msg_json.lstHangHoa).length;
+          console.log(length);
+          for (var i in msg_json.lstHangHoa) {
+            var mtp = i;
+            var soluong = msg_json.lstHangHoa[i];
+            count++;
+            request.query(
+              "INSERT INTO SMSNganHang.DBO.TBL_DONHANG_MOBILE(MADT, MATP, SO_LUONG) VALUES('" +
+                makh +
+                "','" +
+                mtp +
+                "','" +
+                soluong +
+                "');",
+              function(err, recordset) {
+                if (err) console.log(err);
+                console.log(count);
+                if(count == length){
+                  // sql.close();
+                }
+              }
+            );
+          }
+        }
+      );
     }
   });
 });
