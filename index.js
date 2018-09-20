@@ -186,14 +186,43 @@ app.get("/getcongnohientaitonghop", function(req, res) {
       if (err) console.log(err);
       var request = new sql.Request();
 
-      request.query(
-        " exec Tien_BaoCaoNoQuaHan '"+ manv +"'",
-        function(err, recordset) {
-          if (err) console.log(err);
-          res.send(JSON.stringify(recordset.recordset));
-          sql.close();
-        }
-      );
+      request.query(" exec Tien_BaoCaoNoQuaHan '" + manv + "'", function(
+        err,
+        recordset
+      ) {
+        if (err) console.log(err);
+        res.send(JSON.stringify(recordset.recordset));
+        sql.close();
+      });
+    }
+  );
+});
+
+/**
+ * Get chi tiet cong no tu ngay toi ngay cua khach hang
+ */
+app.get("/getdetailfromto", function(req, res) {
+  var madt = req.param("madt");
+  var month_year = req.param("month");
+  var month = month_year.split("-")[0];
+  var year = month_year.split("-")[1];
+  var from = year + "-" + month + "-01";
+  var d = new Date(2008, month, 0);
+  var to = year + "-" + month + "-" + d.getDate();
+  sql.connect(
+    configHD,
+    function(err) {
+      if (err) console.log(err);
+      var request = new sql.Request();
+
+      request.query(" exec Tien_BC_CONGNO_Ngay '" + madt + "','"+from+"','"+ to +"'", function(
+        err,
+        recordset
+      ) {
+        if (err) console.log(err);
+        res.send(JSON.stringify(recordset.recordset));
+        sql.close();
+      });
     }
   );
 });
@@ -260,7 +289,7 @@ s.on("connection", function(ws, req) {
               function(err, recordset) {
                 if (err) console.log(err);
                 console.log(count);
-                if(count == length){
+                if (count == length) {
                   // sql.close();
                 }
               }
