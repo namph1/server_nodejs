@@ -186,7 +186,7 @@ app.get("/getcongnohientaitonghop", function(req, res) {
       if (err) console.log(err);
       var request = new sql.Request();
 
-      request.query(" exec Tien_BaoCaoNoQuaHan '" + manv + "'", function(
+      request.query(" exec Tien_BaoCaoNoQuaHan '" + manv + "',1", function(
         err,
         recordset
       ) {
