@@ -56,13 +56,41 @@ app.get("/home", function(req, res) {
 
 //get khoan
 app.get("/khoan", function(req, res) {
+  var id = req.param("id");
   sql.connect(
     configHD,
     function(err) {
       if (err) console.log(err);
       var request = new sql.Request();
+      
       var sQeuery =
-        "select DMKhoanCT.ID,DMKhoanCT.MaKH,DMKhoanCT.SoTan,DMKhoanCT.NguoiSua,DMKhoanCT.NgaySua, DMKH.TEN_KHACH_HANG TenKH, DMKH.DiaChiTat from DMKhoanCT DMKhoanCT inner join DM_Khach_Hang DMKH on DMKhoanCT.MaKH=DMKH.MKH where ID= 55;";
+        "select DMKhoanCT.ID,DMKhoanCT.MaKH,DMKhoanCT.SoTan,DMKhoanCT.NguoiSua,DMKhoanCT.NgaySua, DMKH.TEN_KHACH_HANG TenKH, DMKH.DiaChiTat from DMKhoanCT DMKhoanCT inner join DM_Khach_Hang DMKH on DMKhoanCT.MaKH=DMKH.MKH ";
+        if(id == 1){
+          sQeuery += ' where DMKhoanCT.ID= (SELECT MAX(ID) FROM DMKhoan);';
+        }else if(id == 2){
+          sQeuery += ' where DMKhoanCT.ID= (SELECT MAX(ID)-1 FROM DMKhoan);';
+        }
+      request.query(sQeuery, function(err, recordset) {
+        if (err) console.log(err);
+        res.send(JSON.stringify(recordset.recordset));
+        sql.close();
+      });
+    }
+  );
+});
+
+app.get("/khoanchitiet", function(req, res) {
+  var id = req.param("id");
+  var manvtt = req.param("manvtt");
+  sql.connect(
+    configHD,
+    function(err) {
+      if (err) console.log(err);
+      var request = new sql.Request();
+      
+      var sQeuery =
+        "exec Tien_BaoCaoKhoan2 '" + manvtt +"',"+ id+ ",1100" ;
+        
       request.query(sQeuery, function(err, recordset) {
         if (err) console.log(err);
         res.send(JSON.stringify(recordset.recordset));
@@ -219,6 +247,27 @@ app.get("/getdetailfromto", function(req, res) {
         err,
         recordset
       ) {
+        if (err) console.log(err);
+        res.send(JSON.stringify(recordset.recordset));
+        sql.close();
+      });
+    }
+  );
+});
+
+
+/**
+ * get ton kho hai duong.
+ */
+app.get("/gettonkho", function(req, res) {
+  sql.connect(
+    configHD,
+    function(err) {
+      if (err) console.log(err);
+      var request = new sql.Request();
+      var sQeuery =
+        "exec Tien_TongHopDDHChuaXuat 0;";
+      request.query(sQeuery, function(err, recordset) {
         if (err) console.log(err);
         res.send(JSON.stringify(recordset.recordset));
         sql.close();
