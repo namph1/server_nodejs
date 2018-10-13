@@ -62,14 +62,14 @@ app.get("/khoan", function(req, res) {
     function(err) {
       if (err) console.log(err);
       var request = new sql.Request();
-      
+
       var sQeuery =
         "select DMKhoanCT.ID,DMKhoanCT.MaKH,DMKhoanCT.SoTan,DMKhoanCT.NguoiSua,DMKhoanCT.NgaySua, DMKH.TEN_KHACH_HANG TenKH, DMKH.DiaChiTat from DMKhoanCT DMKhoanCT inner join DM_Khach_Hang DMKH on DMKhoanCT.MaKH=DMKH.MKH ";
-        if(id == 1){
-          sQeuery += ' where DMKhoanCT.ID= (SELECT MAX(ID) FROM DMKhoan);';
-        }else if(id == 2){
-          sQeuery += ' where DMKhoanCT.ID= (SELECT MAX(ID)-1 FROM DMKhoan);';
-        }
+      if (id == 1) {
+        sQeuery += " where DMKhoanCT.ID= (SELECT MAX(ID) FROM DMKhoan);";
+      } else if (id == 2) {
+        sQeuery += " where DMKhoanCT.ID= (SELECT MAX(ID)-1 FROM DMKhoan);";
+      }
       request.query(sQeuery, function(err, recordset) {
         if (err) console.log(err);
         res.send(JSON.stringify(recordset.recordset));
@@ -87,10 +87,9 @@ app.get("/khoanchitiet", function(req, res) {
     function(err) {
       if (err) console.log(err);
       var request = new sql.Request();
-      
-      var sQeuery =
-        "exec Tien_BaoCaoKhoan2 '" + manvtt +"',"+ id+ ",1100" ;
-        
+
+      var sQeuery = "exec Tien_BaoCaoKhoan2 '" + manvtt + "'," + id + ",1100";
+
       request.query(sQeuery, function(err, recordset) {
         if (err) console.log(err);
         res.send(JSON.stringify(recordset.recordset));
@@ -123,6 +122,7 @@ app.get("/dmkhoan", function(req, res) {
 
 app.get("/dondathang", function(req, res) {
   var manvtt = req.param("mnvtt");
+  var type = req.param("type");
   sql.connect(
     configHD,
     function(err) {
@@ -133,7 +133,33 @@ app.get("/dondathang", function(req, res) {
         'exec VINA_IAS.dbo.Tien_BaoCaoDSDatHang "' + manvtt + '",1,1;',
         function(err, recordset) {
           if (err) console.log(err);
-          res.send(JSON.stringify(recordset.recordset));
+
+          var data = recordset.recordset;
+          if (type == 2) {
+            var i = 0;
+            while (i < data.length) {
+              // chua xuat
+              if (data[i].TrangThai === "Cân Lần 1"
+              || data[i].TrangThai === "") {
+                data.splice(i, 1);
+              } else {
+                i++;
+              }
+            }
+          } else if (type == 1) {
+            //da xuat
+            var i = 0;
+            while (i < data.length) {
+              if (data[i].TrangThai === "Phiếu Xuất"
+              || data[i].TrangThai === "Cân Lần 2") {
+                data.splice(i, 1);
+              } else {
+                i++;
+              }
+            }
+          }
+          res.send(JSON.stringify(data));
+
           sql.close();
         }
       );
@@ -243,18 +269,17 @@ app.get("/getdetailfromto", function(req, res) {
       if (err) console.log(err);
       var request = new sql.Request();
 
-      request.query(" exec Tien_BC_CONGNO_Ngay '" + madt + "','"+from+"','"+ to +"'", function(
-        err,
-        recordset
-      ) {
-        if (err) console.log(err);
-        res.send(JSON.stringify(recordset.recordset));
-        sql.close();
-      });
+      request.query(
+        " exec Tien_BC_CONGNO_Ngay '" + madt + "','" + from + "','" + to + "'",
+        function(err, recordset) {
+          if (err) console.log(err);
+          res.send(JSON.stringify(recordset.recordset));
+          sql.close();
+        }
+      );
     }
   );
 });
-
 
 /**
  * get ton kho hai duong.
@@ -265,8 +290,29 @@ app.get("/gettonkho", function(req, res) {
     function(err) {
       if (err) console.log(err);
       var request = new sql.Request();
-      var sQeuery =
-        "exec Tien_TongHopDDHChuaXuat 0;";
+      var sQeuery = "exec Tien_TongHopDDHChuaXuat 0;";
+      request.query(sQeuery, function(err, recordset) {
+        if (err) console.log(err);
+        res.send(JSON.stringify(recordset.recordset));
+        sql.close();
+      });
+    }
+  );
+});
+
+app.get("/getchitietdonhang", function(req, res) {
+  var idkey = req.param("idkey");
+  sql.connect(
+    configHD,
+    function(err) {
+      if (err) console.log(err);
+      var request = new sql.Request();
+      // var sQeuery =
+      //   "Select STT, CT_DDH.MATP, DMTP.TENTP ,SoLuong, DonGia, Tien, KhoiLuong, baobi.TEN_BAO_BI,0 SLKho, 0 SLKhoDH  ";
+      //   sQeuery += " from CT_DDH JOIN DMTP on CT_DDH.matp= DMTP.MATP  ";
+      //   sQeuery += " join DM_BAO_BI baobi on baobi.MBB = DMTP.MBB  ";
+      //   sQeuery += "  where IDKEY='" + idkey +"'order by STT;";
+      var sQeuery = "exec Tien_So_Ton_CuaCacTPTrongDDH '" + idkey + "';";
       request.query(sQeuery, function(err, recordset) {
         if (err) console.log(err);
         res.send(JSON.stringify(recordset.recordset));
