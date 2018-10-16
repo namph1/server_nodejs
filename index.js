@@ -10,6 +10,52 @@ var sql = require("mssql");
 var md5 = require("md5");
 const crypto = require("crypto");
 
+net = require("net");
+
+net
+  .createServer(function(socket) {
+    socket.on("data", function(data) {
+      var msg_json = JSON.parse(data);
+      console.log("DATA " + socket.remoteAddress + ": " + msg_json.lstHangHoa);
+      var makh = msg_json.makh;
+
+      sql.connect(
+        config_test,
+        function(err) {
+          if (err) console.log(err);
+          var request = new sql.Request();
+          var count = 0;
+          var length = Object.keys(msg_json.lstHangHoa).length;
+          console.log(length);
+          for (var i in msg_json.lstHangHoa) {
+            var mtp = i;
+            var idkey = msg_json.idkey;
+            var soluong = msg_json.lstHangHoa[i];
+            count++;
+            request.query(
+              " UPDATE [SMSNganHang].[dbo].[TBL_DONHANG_MOBILE] SET SO_LUONG =  " +
+              soluong +
+                " WHERE IDKEY='" +
+                idkey +
+                "' and MATP= '" +
+                mtp +
+                "';",
+              function(err, recordset) {
+                if (err) console.log(err);
+                // console.log(count);
+                if (count == length) {
+                  sql.close();
+                }
+              }
+            );
+          }
+          socket.write("dodai " + length);
+        }
+      );
+    });
+  })
+  .listen(5003);
+
 var config = {
   user: "sa",
   password: "vinavina",
@@ -32,6 +78,47 @@ var config_test = {
 };
 
 serverHttp.listen(process.env.PORT || 5000);
+
+app.get("/insertNew", function(req, res) {
+  var data = req.param("data");
+  var msg_json = JSON.parse(data);
+  var makh = msg_json.makh;
+  
+  sql.connect(
+    config_test,
+    function(err) {
+      if (err) console.log(err);
+      var request = new sql.Request();
+      var count = 0;
+      var length = Object.keys(msg_json.lstHangHoa).length;
+      console.log(length);
+      for (var i in msg_json.lstHangHoa) {
+        var mtp = i;
+
+        var soluong = msg_json.lstHangHoa[i];
+        count++;
+        request.query(
+          "INSERT INTO SMSNganHang.DBO.TBL_DONHANG_MOBILE(MADT, MATP, SO_LUONG) VALUES('" +
+            makh +
+            "','" +
+            mtp +
+            "'," +
+            soluong +
+            ");",
+          function(err, recordset) {
+            if (err) console.log(err);
+            // console.log(count);
+            if (count == length) {
+              sql.close();
+             
+            }
+          }
+        );
+      }
+    }
+  );
+  res.send("OK");
+});
 
 //get san luong chung
 
@@ -139,8 +226,10 @@ app.get("/dondathang", function(req, res) {
             var i = 0;
             while (i < data.length) {
               // chua xuat
-              if (data[i].TrangThai === "Cân Lần 1"
-              || data[i].TrangThai === "") {
+              if (
+                data[i].TrangThai === "Cân Lần 1" ||
+                data[i].TrangThai === ""
+              ) {
                 data.splice(i, 1);
               } else {
                 i++;
@@ -150,8 +239,10 @@ app.get("/dondathang", function(req, res) {
             //da xuat
             var i = 0;
             while (i < data.length) {
-              if (data[i].TrangThai === "Phiếu Xuất"
-              || data[i].TrangThai === "Cân Lần 2") {
+              if (
+                data[i].TrangThai === "Phiếu Xuất" ||
+                data[i].TrangThai === "Cân Lần 2"
+              ) {
                 data.splice(i, 1);
               } else {
                 i++;
@@ -360,7 +451,7 @@ s.on("connection", function(ws, req) {
       );
     } else if (msg_json.action == "DONHANG_ACTION") {
       var makh = msg_json.makh;
-      sql.close();
+
       sql.connect(
         config_test,
         function(err) {
@@ -368,7 +459,7 @@ s.on("connection", function(ws, req) {
           var request = new sql.Request();
           var count = 0;
           var length = Object.keys(msg_json.lstHangHoa).length;
-          console.log(length);
+          // console.log(length);
           for (var i in msg_json.lstHangHoa) {
             var mtp = i;
             var soluong = msg_json.lstHangHoa[i];
@@ -378,14 +469,14 @@ s.on("connection", function(ws, req) {
                 makh +
                 "','" +
                 mtp +
-                "','" +
+                "'," +
                 soluong +
-                "');",
+                ");",
               function(err, recordset) {
                 if (err) console.log(err);
-                console.log(count);
+                // console.log(count);
                 if (count == length) {
-                  // sql.close();
+                  sql.close();
                 }
               }
             );
