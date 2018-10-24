@@ -34,7 +34,7 @@ net
             count++;
             request.query(
               " UPDATE [SMSNganHang].[dbo].[TBL_DONHANG_MOBILE] SET SO_LUONG =  " +
-              soluong +
+                soluong +
                 " WHERE IDKEY='" +
                 idkey +
                 "' and MATP= '" +
@@ -83,125 +83,148 @@ app.get("/insertNew", function(req, res) {
   var data = req.param("data");
   var msg_json = JSON.parse(data);
   var makh = msg_json.makh;
-  
-  sql.connect(
-    config_test,
-    function(err) {
-      if (err) console.log(err);
-      var request = new sql.Request();
-      var count = 0;
-      var length = Object.keys(msg_json.lstHangHoa).length;
-      console.log(length);
-      for (var i in msg_json.lstHangHoa) {
-        var mtp = i;
+  var token = req.param("token");
+  if (mapToken.has(token)) {
+    sql.connect(
+      config_test,
+      function(err) {
+        if (err) console.log(err);
+        var request = new sql.Request();
+        var count = 0;
+        var length = Object.keys(msg_json.lstHangHoa).length;
+        console.log(length);
+        for (var i in msg_json.lstHangHoa) {
+          var mtp = i;
 
-        var soluong = msg_json.lstHangHoa[i];
-        count++;
-        request.query(
-          "INSERT INTO SMSNganHang.DBO.TBL_DONHANG_MOBILE(MADT, MATP, SO_LUONG) VALUES('" +
-            makh +
-            "','" +
-            mtp +
-            "'," +
-            soluong +
-            ");",
-          function(err, recordset) {
-            if (err) console.log(err);
-            // console.log(count);
-            if (count == length) {
-              sql.close();
-             
+          var soluong = msg_json.lstHangHoa[i];
+          count++;
+          request.query(
+            "INSERT INTO SMSNganHang.DBO.TBL_DONHANG_MOBILE(MADT, MATP, SO_LUONG) VALUES('" +
+              makh +
+              "','" +
+              mtp +
+              "'," +
+              soluong +
+              ");",
+            function(err, recordset) {
+              if (err) console.log(err);
+              // console.log(count);
+              if (count == length) {
+                sql.close();
+              }
             }
-          }
-        );
+          );
+        }
       }
-    }
-  );
-  res.send("OK");
+    );
+    res.send("OK");
+  } else {
+    res.send("ERROR");
+  }
 });
 
 //get san luong chung
 
 app.get("/home", function(req, res) {
-  sql.connect(
-    config,
-    function(err) {
-      if (err) console.log(err);
-      var request = new sql.Request();
+  var token = req.param("token");
+  if (mapToken.has(token)) {
+    sql.connect(
+      config,
+      function(err) {
+        if (err) console.log(err);
+        var request = new sql.Request();
 
-      request.query(
-        'exec VINA_Chung.dbo.GetSanLuongHienTai "namph", 1;',
-        function(err, recordset) {
-          if (err) console.log(err);
-          res.send(JSON.stringify(recordset.recordset));
-          sql.close();
-        }
-      );
-    }
-  );
+        request.query(
+          'exec VINA_Chung.dbo.GetSanLuongHienTai "namph", 1;',
+          function(err, recordset) {
+            if (err) console.log(err);
+            res.send(JSON.stringify(recordset.recordset));
+            sql.close();
+          }
+        );
+      }
+    );
+  } else {
+    res.send("ERROR");
+  }
 });
 
 //get khoan
 app.get("/khoan", function(req, res) {
   var id = req.param("id");
-  sql.connect(
-    configHD,
-    function(err) {
-      if (err) console.log(err);
-      var request = new sql.Request();
-
-      var sQeuery =
-        "select DMKhoanCT.ID,DMKhoanCT.MaKH,DMKhoanCT.SoTan,DMKhoanCT.NguoiSua,DMKhoanCT.NgaySua, DMKH.TEN_KHACH_HANG TenKH, DMKH.DiaChiTat from DMKhoanCT DMKhoanCT inner join DM_Khach_Hang DMKH on DMKhoanCT.MaKH=DMKH.MKH ";
-      if (id == 1) {
-        sQeuery += " where DMKhoanCT.ID= (SELECT MAX(ID) FROM DMKhoan);";
-      } else if (id == 2) {
-        sQeuery += " where DMKhoanCT.ID= (SELECT MAX(ID)-1 FROM DMKhoan);";
-      }
-      request.query(sQeuery, function(err, recordset) {
+  var token = req.param("token");
+  if (mapToken.has(token)) {
+    sql.connect(
+      configHD,
+      function(err) {
         if (err) console.log(err);
-        res.send(JSON.stringify(recordset.recordset));
-        sql.close();
-      });
-    }
-  );
+        var request = new sql.Request();
+
+        var sQeuery =
+          "select DMKhoanCT.ID,DMKhoanCT.MaKH,DMKhoanCT.SoTan,DMKhoanCT.NguoiSua,DMKhoanCT.NgaySua, DMKH.TEN_KHACH_HANG TenKH, DMKH.DiaChiTat from DMKhoanCT DMKhoanCT inner join DM_Khach_Hang DMKH on DMKhoanCT.MaKH=DMKH.MKH ";
+        if (id == 1) {
+          sQeuery += " where DMKhoanCT.ID= (SELECT MAX(ID) FROM DMKhoan);";
+        } else if (id == 2) {
+          sQeuery += " where DMKhoanCT.ID= (SELECT MAX(ID)-1 FROM DMKhoan);";
+        }
+        request.query(sQeuery, function(err, recordset) {
+          if (err) console.log(err);
+          res.send(JSON.stringify(recordset.recordset));
+          sql.close();
+        });
+      }
+    );
+  } else {
+    res.send("ERROR");
+  }
 });
 
 app.get("/khoanchitiet", function(req, res) {
   var id = req.param("id");
   var manvtt = req.param("manvtt");
-  sql.connect(
-    configHD,
-    function(err) {
-      if (err) console.log(err);
-      var request = new sql.Request();
-
-      var sQeuery = "exec Tien_BaoCaoKhoan2 '" + manvtt + "'," + id + ",1100";
-
-      request.query(sQeuery, function(err, recordset) {
+  var token = req.param("token");
+  if (mapToken.has(token)) {
+    sql.connect(
+      configHD,
+      function(err) {
         if (err) console.log(err);
-        res.send(JSON.stringify(recordset.recordset));
-        sql.close();
-      });
-    }
-  );
+        var request = new sql.Request();
+
+        var sQeuery = "exec Tien_BaoCaoKhoan2 '" + manvtt + "'," + id + ",1100";
+
+        request.query(sQeuery, function(err, recordset) {
+          if (err) console.log(err);
+          res.send(JSON.stringify(recordset.recordset));
+          sql.close();
+        });
+      }
+    );
+  } else {
+    res.send("ERROR");
+  }
 });
 
 //danh sach khoan
 app.get("/dmkhoan", function(req, res) {
-  sql.connect(
-    configHD,
-    function(err) {
-      if (err) console.log(err);
-      var request = new sql.Request();
-      var sQeuery =
-        "select TOP 7 DMKhoan.ID, DMKhoan.Ten from DMKhoan order by id desc;";
-      request.query(sQeuery, function(err, recordset) {
+  var token = req.param("token");
+  if (mapToken.has(token)) {
+    sql.connect(
+      configHD,
+      function(err) {
         if (err) console.log(err);
-        res.send(JSON.stringify(recordset.recordset));
-        sql.close();
-      });
-    }
-  );
+        var request = new sql.Request();
+        var sQeuery =
+          "select TOP 7 DMKhoan.ID, DMKhoan.Ten from DMKhoan order by id desc;";
+        request.query(sQeuery, function(err, recordset) {
+          if (err) console.log(err);
+          res.send(JSON.stringify(recordset.recordset));
+          sql.close();
+        });
+      }
+    );
+  } else {
+    res.send("ERROR");
+  }
 });
 /**
  * GET DANH SACH DON DAT HANG
@@ -210,52 +233,57 @@ app.get("/dmkhoan", function(req, res) {
 app.get("/dondathang", function(req, res) {
   var manvtt = req.param("mnvtt");
   var type = req.param("type");
-  sql.connect(
-    configHD,
-    function(err) {
-      if (err) console.log(err);
-      var request = new sql.Request();
+  var token = req.param("token");
+  if (mapToken.has(token)) {
+    sql.connect(
+      configHD,
+      function(err) {
+        if (err) console.log(err);
+        var request = new sql.Request();
 
-      request.query(
-        'exec VINA_IAS.dbo.Tien_BaoCaoDSDatHang "' + manvtt + '",1,1;',
-        function(err, recordset) {
-          if (err) console.log(err);
+        request.query(
+          'exec VINA_IAS.dbo.Tien_BaoCaoDSDatHang "' + manvtt + '",1,1;',
+          function(err, recordset) {
+            if (err) console.log(err);
 
-          var data = recordset.recordset;
-          if (type == 2) {
-            var i = 0;
-            while (i < data.length) {
-              // chua xuat
-              if (
-                data[i].TrangThai === "Cân Lần 1" ||
-                data[i].TrangThai === ""
-              ) {
-                data.splice(i, 1);
-              } else {
-                i++;
+            var data = recordset.recordset;
+            if (type == 2) {
+              var i = 0;
+              while (i < data.length) {
+                // chua xuat
+                if (
+                  data[i].TrangThai === "Cân Lần 1" ||
+                  data[i].TrangThai === ""
+                ) {
+                  data.splice(i, 1);
+                } else {
+                  i++;
+                }
+              }
+            } else if (type == 1) {
+              //da xuat
+              var i = 0;
+              while (i < data.length) {
+                if (
+                  data[i].TrangThai === "Phiếu Xuất" ||
+                  data[i].TrangThai === "Cân Lần 2"
+                ) {
+                  data.splice(i, 1);
+                } else {
+                  i++;
+                }
               }
             }
-          } else if (type == 1) {
-            //da xuat
-            var i = 0;
-            while (i < data.length) {
-              if (
-                data[i].TrangThai === "Phiếu Xuất" ||
-                data[i].TrangThai === "Cân Lần 2"
-              ) {
-                data.splice(i, 1);
-              } else {
-                i++;
-              }
-            }
+            res.send(JSON.stringify(data));
+
+            sql.close();
           }
-          res.send(JSON.stringify(data));
-
-          sql.close();
-        }
-      );
-    }
-  );
+        );
+      }
+    );
+  } else {
+    res.send("ERROR");
+  }
 });
 
 /**
@@ -264,30 +292,35 @@ app.get("/dondathang", function(req, res) {
 
 app.get("/dshanghoadaily", function(req, res) {
   var madt = req.param("madt");
-  sql.connect(
-    configHD,
-    function(err) {
-      if (err) console.log(err);
-      var request = new sql.Request();
+  var token = req.param("token");
+  if (mapToken.has(token)) {
+    sql.connect(
+      configHD,
+      function(err) {
+        if (err) console.log(err);
+        var request = new sql.Request();
 
-      request.query(
-        " select DMTP.MATP, DMTP.TENTP, DMTP.TENTP + ' (' + DMBB.TEN_BAO_BI + ')' TenFull " +
-          " from Hoa_Don HD inner join CTHD CTHD on HD.IDKEY=CTHD.IDKEY " +
-          " inner join DMTP DMTP on CTHD.MATP=DMTP.MATP " +
-          " inner join DM_BAO_BI DMBB on DMTP.MBB=DMBB.MBB " +
-          " where HD.Ngay>=dateadd(day,-60,getdate()) " +
-          " and HD.MADT='" +
-          madt +
-          "'" +
-          " group by DMTP.MATP, DMTP.TENTP, DMBB.TEN_BAO_BI order by DMTP.TENTP; ",
-        function(err, recordset) {
-          if (err) console.log(err);
-          res.send(JSON.stringify(recordset.recordset));
-          sql.close();
-        }
-      );
-    }
-  );
+        request.query(
+          " select DMTP.MATP, DMTP.TENTP, DMTP.TENTP + ' (' + DMBB.TEN_BAO_BI + ')' TenFull " +
+            " from Hoa_Don HD inner join CTHD CTHD on HD.IDKEY=CTHD.IDKEY " +
+            " inner join DMTP DMTP on CTHD.MATP=DMTP.MATP " +
+            " inner join DM_BAO_BI DMBB on DMTP.MBB=DMBB.MBB " +
+            " where HD.Ngay>=dateadd(day,-60,getdate()) " +
+            " and HD.MADT='" +
+            madt +
+            "'" +
+            " group by DMTP.MATP, DMTP.TENTP, DMBB.TEN_BAO_BI order by DMTP.TENTP; ",
+          function(err, recordset) {
+            if (err) console.log(err);
+            res.send(JSON.stringify(recordset.recordset));
+            sql.close();
+          }
+        );
+      }
+    );
+  } else {
+    res.send("ERROR");
+  }
 });
 
 /**
@@ -296,28 +329,33 @@ app.get("/dshanghoadaily", function(req, res) {
 
 app.get("/getdailytheotiepthi", function(req, res) {
   var manv = req.param("manv");
-  sql.connect(
-    configHD,
-    function(err) {
-      if (err) console.log(err);
-      var request = new sql.Request();
+  var token = req.param("token");
+  if (mapToken.has(token)) {
+    sql.connect(
+      configHD,
+      function(err) {
+        if (err) console.log(err);
+        var request = new sql.Request();
 
-      request.query(
-        " select MKH, TEN_KHACH_HANG, DIA_CHI, MKH + N' - ' + TEN_KHACH_HANG + N' (' + DiaChiTat + N')'  TenKH  " +
-          " from DM_KHACH_HANG where Isnull(KhongDung,0)=0  " +
-          " and (('1' + MKH)='" +
-          manv +
-          "' or (MNVTT in (select * from getdsnhanvien('" +
-          manv +
-          "')))); ",
-        function(err, recordset) {
-          if (err) console.log(err);
-          res.send(JSON.stringify(recordset.recordset));
-          sql.close();
-        }
-      );
-    }
-  );
+        request.query(
+          " select MKH, TEN_KHACH_HANG, DIA_CHI, MKH + N' - ' + TEN_KHACH_HANG + N' (' + DiaChiTat + N')'  TenKH  " +
+            " from DM_KHACH_HANG where Isnull(KhongDung,0)=0  " +
+            " and (('1' + MKH)='" +
+            manv +
+            "' or (MNVTT in (select * from getdsnhanvien('" +
+            manv +
+            "')))); ",
+          function(err, recordset) {
+            if (err) console.log(err);
+            res.send(JSON.stringify(recordset.recordset));
+            sql.close();
+          }
+        );
+      }
+    );
+  } else {
+    res.send("ERROR");
+  }
 });
 
 /**
@@ -325,22 +363,27 @@ app.get("/getdailytheotiepthi", function(req, res) {
  */
 app.get("/getcongnohientaitonghop", function(req, res) {
   var manv = req.param("manv");
-  sql.connect(
-    configHD,
-    function(err) {
-      if (err) console.log(err);
-      var request = new sql.Request();
-
-      request.query(" exec Tien_BaoCaoNoQuaHan '" + manv + "',1", function(
-        err,
-        recordset
-      ) {
+  var token = req.param("token");
+  if (mapToken.has(token)) {
+    sql.connect(
+      configHD,
+      function(err) {
         if (err) console.log(err);
-        res.send(JSON.stringify(recordset.recordset));
-        sql.close();
-      });
-    }
-  );
+        var request = new sql.Request();
+
+        request.query(" exec Tien_BaoCaoNoQuaHan '" + manv + "',1", function(
+          err,
+          recordset
+        ) {
+          if (err) console.log(err);
+          res.send(JSON.stringify(recordset.recordset));
+          sql.close();
+        });
+      }
+    );
+  } else {
+    res.send("ERROR");
+  }
 });
 
 /**
@@ -354,66 +397,88 @@ app.get("/getdetailfromto", function(req, res) {
   var from = year + "-" + month + "-01";
   var d = new Date(2008, month, 0);
   var to = year + "-" + month + "-" + d.getDate();
-  sql.connect(
-    configHD,
-    function(err) {
-      if (err) console.log(err);
-      var request = new sql.Request();
+  var token = req.param("token");
+  if (mapToken.has(token)) {
+    sql.connect(
+      configHD,
+      function(err) {
+        if (err) console.log(err);
+        var request = new sql.Request();
 
-      request.query(
-        " exec Tien_BC_CONGNO_Ngay '" + madt + "','" + from + "','" + to + "'",
-        function(err, recordset) {
-          if (err) console.log(err);
-          res.send(JSON.stringify(recordset.recordset));
-          sql.close();
-        }
-      );
-    }
-  );
+        request.query(
+          " exec Tien_BC_CONGNO_Ngay '" +
+            madt +
+            "','" +
+            from +
+            "','" +
+            to +
+            "'",
+          function(err, recordset) {
+            if (err) console.log(err);
+            res.send(JSON.stringify(recordset.recordset));
+            sql.close();
+          }
+        );
+      }
+    );
+  } else {
+    res.send("ERROR");
+  }
 });
 
 /**
  * get ton kho hai duong.
  */
 app.get("/gettonkho", function(req, res) {
-  sql.connect(
-    configHD,
-    function(err) {
-      if (err) console.log(err);
-      var request = new sql.Request();
-      var sQeuery = "exec Tien_TongHopDDHChuaXuat 0;";
-      request.query(sQeuery, function(err, recordset) {
+  var token = req.param("token");
+  if (mapToken.has(token)) {
+    sql.connect(
+      configHD,
+      function(err) {
         if (err) console.log(err);
-        res.send(JSON.stringify(recordset.recordset));
-        sql.close();
-      });
-    }
-  );
+        var request = new sql.Request();
+        var sQeuery = "exec Tien_TongHopDDHChuaXuat 0;";
+        request.query(sQeuery, function(err, recordset) {
+          if (err) console.log(err);
+          res.send(JSON.stringify(recordset.recordset));
+          sql.close();
+        });
+      }
+    );
+  } else {
+    res.send("ERROR");
+  }
 });
 
 app.get("/getchitietdonhang", function(req, res) {
   var idkey = req.param("idkey");
-  sql.connect(
-    configHD,
-    function(err) {
-      if (err) console.log(err);
-      var request = new sql.Request();
-      // var sQeuery =
-      //   "Select STT, CT_DDH.MATP, DMTP.TENTP ,SoLuong, DonGia, Tien, KhoiLuong, baobi.TEN_BAO_BI,0 SLKho, 0 SLKhoDH  ";
-      //   sQeuery += " from CT_DDH JOIN DMTP on CT_DDH.matp= DMTP.MATP  ";
-      //   sQeuery += " join DM_BAO_BI baobi on baobi.MBB = DMTP.MBB  ";
-      //   sQeuery += "  where IDKEY='" + idkey +"'order by STT;";
-      var sQeuery = "exec Tien_So_Ton_CuaCacTPTrongDDH '" + idkey + "';";
-      request.query(sQeuery, function(err, recordset) {
+  var token = req.param("token");
+  if (mapToken.has(token)) {
+    sql.connect(
+      configHD,
+      function(err) {
         if (err) console.log(err);
-        res.send(JSON.stringify(recordset.recordset));
-        sql.close();
-      });
-    }
-  );
+        var request = new sql.Request();
+        // var sQeuery =
+        //   "Select STT, CT_DDH.MATP, DMTP.TENTP ,SoLuong, DonGia, Tien, KhoiLuong, baobi.TEN_BAO_BI,0 SLKho, 0 SLKhoDH  ";
+        //   sQeuery += " from CT_DDH JOIN DMTP on CT_DDH.matp= DMTP.MATP  ";
+        //   sQeuery += " join DM_BAO_BI baobi on baobi.MBB = DMTP.MBB  ";
+        //   sQeuery += "  where IDKEY='" + idkey +"'order by STT;";
+        var sQeuery = "exec Tien_So_Ton_CuaCacTPTrongDDH '" + idkey + "';";
+        request.query(sQeuery, function(err, recordset) {
+          if (err) console.log(err);
+          res.send(JSON.stringify(recordset.recordset));
+          sql.close();
+        });
+      }
+    );
+  } else {
+    res.send("ERROR");
+  }
 });
 
 console.log("Start server at " + new Date().toLocaleString());
+let mapToken = new Map();
 
 s.on("connection", function(ws, req) {
   // const secret = "abcdefg";
@@ -432,6 +497,7 @@ s.on("connection", function(ws, req) {
           if (err) console.log(err);
           var request = new sql.Request();
           var token = md5(msg_json.user + msg_json.pass);
+          console.log(token);
           request.query(
             "select MNVTT,TEN_NHAN_VIEN, e_mail,'" +
               token +
@@ -444,6 +510,7 @@ s.on("connection", function(ws, req) {
               if (err) console.log(err);
               console.log(JSON.stringify(recordset.recordset));
               ws.send(JSON.stringify(recordset.recordset));
+              mapToken.set(token, new Date().getTime());
               sql.close();
             }
           );
